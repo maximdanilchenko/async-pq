@@ -7,5 +7,7 @@
 t.py
 .pypirc
 .pytest_cache
-/docs/build
+/docs
+/build
 /venv
+/site
