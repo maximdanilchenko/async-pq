@@ -1,3 +1,5 @@
+asyncpg
 pytest
 pytest-asyncio
 docker
+mkdocs
