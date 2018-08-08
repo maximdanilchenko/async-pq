@@ -72,7 +72,7 @@ class Queue:
             request_id,
         )
 
-    async def delete_unacked(self, timeout):
+    async def return_unacked(self, timeout: int):
         """ Delete unacked request (queue entities will be with request_id=NULL) """
         await self._connection.execute(
             f"""
@@ -98,7 +98,7 @@ class QueueFabric:
     def __init__(self, connection: Connection):
         self._connection = connection
 
-    async def is_exists_queue(self, name):
+    async def is_exists_queue(self, name: str):
         return await self._connection.fetchval(
             f"""
             SELECT EXISTS(SELECT 1 
