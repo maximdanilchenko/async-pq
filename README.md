@@ -40,9 +40,9 @@ Or vice versa
 await queue.unack(request_id)
 ```
 
-Return to queue all unacknowledged massages older than 300 seconds 
+Return to queue all unacknowledged massages older than ```timeout``` seconds 
 ```python
-await queue.return_unacked(300)
+await queue.return_unacked(timeout=300)
 ```
 
 Clean queue (delete all acknowledged massages)
