@@ -7,7 +7,7 @@ import asyncpg
 conn = await asyncpg.connect('postgresql://postgres@localhost/test')
 ```
 
-QueueFabric.find_queue method will create needed 
+```QueueFabric.find_queue``` method will create needed 
 tables in database if it is new queue. Also it has ```is_exists_queue``` method
 ```python
 from async_pq import Queue, QueueFabric
@@ -20,8 +20,8 @@ Put new items (dumped JSONs) in queue:
 await queue.put('{"id":1,"data":[1,2,3]}', '{"id":2,"data":[3,2,6]}')
 ```
 
-Pop items from queue with limit 2. It is possible to use acknowledge pattern.
-If with_ack=False, massage will be acknowledged automatically
+Pop items from queue with ```limit=2```. It is possible to use acknowledge pattern.
+If ```with_ack=False```, massage will be acknowledged automatically
 ```python
 request_id, data = await queue.pop(limit=2, with_ack=True)
 ```
