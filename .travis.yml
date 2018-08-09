@@ -14,5 +14,5 @@ env:
   - TRAVIS=yes
 before_install:
   - docker pull postgres:9.6
-  - docker run -d -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=user -e POSTGRES_DB=test_db --name pq_test_db postgres:9.6
+  - docker run -d -e --rm POSTGRES_PASSWORD=pass -e POSTGRES_USER=user -e POSTGRES_DB=test_db --name pq_test_db postgres:9.6
   - docker ps -a
