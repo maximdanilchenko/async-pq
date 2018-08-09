@@ -1,3 +1,4 @@
+[![Travis CI](https://travis-ci.org/maximdanilchenko/async-pq.svg?branch=master)](https://travis-ci.org/maximdanilchenko/async-pq)
 [![PyPI version](https://badge.fury.io/py/async-pq.svg)](https://badge.fury.io/py/async-pq)
 [![Documentation Status](https://readthedocs.org/projects/async-pq/badge/?version=latest)](https://async-pq.readthedocs.io/en/latest/?badge=latest)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
