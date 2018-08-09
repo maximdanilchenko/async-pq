@@ -4,7 +4,7 @@ python:
 install:
   - pip install -r dev_requirements.txt
 script:
-  - pytest tests.py
+  - pytest tests.py --cov async_pq
 after_success: codecov
 sudo: required
 services:
