@@ -26,7 +26,7 @@ class TestPq:
         client.images.pull('postgres:9.6')
         postgres_container = client.containers.create(
             image='postgres:9.6',
-            ports={5432: 5432},
+            ports={5431: 5432},
             environment={
                 'POSTGRES_PASSWORD': POSTGRES_PASSWORD,
                 'POSTGRES_USER': POSTGRES_USER,
@@ -41,7 +41,7 @@ class TestPq:
     async def pg_connection(self, run_database) -> asyncpg.Connection:
         con = await asyncpg.connect(
             host='127.0.0.1',
-            port=5432,
+            port=5431,
             user=POSTGRES_USER,
             database=POSTGRES_DB,
             password=POSTGRES_PASSWORD,
