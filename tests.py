@@ -1,3 +1,4 @@
+import os
 import time
 
 import asyncpg
@@ -16,6 +17,8 @@ pytestmark = pytest.mark.asyncio
 class TestPq:
     @pytest.fixture
     def run_database(self):
+        if 'TRAVIS' in os.environ:
+            return None
         client = docker.from_env()
         for c in client.containers.list(all=True):
             if c.name == 'pq_test_db':

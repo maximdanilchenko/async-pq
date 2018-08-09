@@ -10,6 +10,8 @@ after_success: codecov
 sudo: required
 services:
   - docker
+env:
+  - TRAVIS=yes
 before_install:
   - docker pull postgres:9.6
-  - docker run -d postgres:9.6 --name pq_test_db -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=user -e POSTGRES_DB=test_db
+  - docker run -d postgres:9.6 -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=user -e POSTGRES_DB=test_db --name pq_test_db
