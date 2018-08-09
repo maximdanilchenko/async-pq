@@ -38,12 +38,14 @@ request_id, data = await queue.pop(limit=2, with_ack=True)
 
 Acknowledge request
 ```python
-await queue.ack(request_id)
+# returns False if request does not found or acked already
+is_acked: bool = await queue.ack(request_id)
 ```
 
 Or vice versa 
 ```python
-await queue.unack(request_id)
+# returns False if request does not found or acked already
+is_unacked: bool = await queue.unack(request_id)
 ```
 
 Return to queue all unacknowledged massages older than ```timeout``` seconds 

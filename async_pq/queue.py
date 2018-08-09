@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import datetime as dt
 
 from asyncpg import Connection
@@ -10,7 +12,7 @@ class Queue:
         self._requests_table_name = f'queue_{name}_requests'
         self._connection = connection
 
-    async def put(self, *entities):
+    async def put(self, *entities: str) -> None:
         """ Insert records (dumped JSONs) into queue """
         await self._connection.executemany(
             f"""
@@ -20,7 +22,7 @@ class Queue:
             zip(entities),
         )
 
-    async def pop(self, limit: int=1, with_ack: bool=True):
+    async def pop(self, limit: int=1, with_ack: bool=True) -> Tuple[int, list]:
         """
         Get <limit> records from queue.
         If with_ack == True, then it needs acknowledgement
@@ -28,10 +30,9 @@ class Queue:
         request_id = await self._connection.fetchval(
             f"""
             INSERT INTO {self._requests_table_name} (r_status) 
-            VALUES($1) 
+            VALUES('wait') 
             RETURNING r_id
-            """,
-            'wait' if with_ack else 'done',
+            """
         )
         data = await self._connection.fetch(
             f"""
@@ -50,29 +51,38 @@ class Queue:
             request_id,
             limit,
         )
-        if not data:
+        if not data or not with_ack:
             await self.ack(request_id)
         return request_id, [i[0] for i in data]
 
-    async def ack(self, request_id: int):
+    async def ack(self, request_id: int) -> bool:
         """ Acknowledge request """
-        await self._connection.execute(
+        if await self._connection.fetchval(
             f"""
-            UPDATE {self._requests_table_name} SET r_status='done' WHERE r_id=$1
+            UPDATE {self._requests_table_name} 
+            SET r_status='done' 
+            WHERE r_id=$1 AND r_status='wait' 
+            RETURNING r_id
             """,
             request_id,
-        )
+        ):
+            return True
+        return False
 
-    async def unack(self, request_id: int):
+    async def unack(self, request_id: int) -> bool:
         """ Delete request """
-        await self._connection.execute(
+        if await self._connection.fetchval(
             f"""
-            DELETE FROM {self._requests_table_name} WHERE r_id=$1
+            DELETE FROM {self._requests_table_name} 
+            WHERE r_id=$1 AND r_status='wait' 
+            RETURNING r_id
             """,
             request_id,
-        )
+        ):
+            return True
+        return False
 
-    async def return_unacked(self, timeout: int):
+    async def return_unacked(self, timeout: int) -> None:
         """ Delete unacked request (queue entities will be with request_id=NULL) """
         await self._connection.execute(
             f"""
@@ -82,7 +92,7 @@ class Queue:
             dt.timedelta(seconds=timeout)
         )
 
-    async def clean_acked_queue(self):
+    async def clean_acked_queue(self) -> None:
         """ Delete acked queue entities (request will not be deleted) """
         await self._connection.execute(
             f"""
@@ -98,7 +108,7 @@ class QueueFabric:
     def __init__(self, connection: Connection):
         self._connection = connection
 
-    async def is_exists_queue(self, name: str):
+    async def is_exists_queue(self, name: str) -> bool:
         return await self._connection.fetchval(
             f"""
             SELECT EXISTS(SELECT 1 
