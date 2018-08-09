@@ -3,10 +3,12 @@ python:
   - "3.5"
   - "3.6"
 install:
-  - pip install -r dev-requirements.txt
+  - pip install -r dev_requirements.txt
 script:
   - pytest tests
 after_success: codecov
 sudo: required
 services:
   - docker
+before_install:
+  - docker pull postgres:9.6
