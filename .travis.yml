@@ -12,3 +12,4 @@ services:
   - docker
 before_install:
   - docker pull postgres:9.6
+  - docker run --name pq_test_db -e "POSTGRES_PASSWORD=pass,POSTGRES_USER=user,POSTGRES_DB=test_db"  -d postgres:9.6
