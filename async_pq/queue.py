@@ -50,7 +50,7 @@ class Queue:
             """,
             request_id,
             limit,
-        )
+        ) or []
         if not data or not with_ack:
             await self.ack(request_id)
         return request_id, [i[0] for i in data]
