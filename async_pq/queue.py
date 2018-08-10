@@ -22,7 +22,7 @@ class Queue:
             zip(entities),
         )
 
-    async def pop(self, limit: int=1, with_ack: bool=True) -> Tuple[int, list]:
+    async def pop(self, limit: int = 1, with_ack: bool = True) -> Tuple[int, list]:
         """
         Get <limit> records from queue.
         If with_ack == True, then it needs acknowledgement
@@ -34,8 +34,9 @@ class Queue:
             RETURNING r_id
             """
         )
-        data = await self._connection.fetch(
-            f"""
+        data = (
+            await self._connection.fetch(
+                f"""
             UPDATE {self._queue_table_name} 
             SET q_request_id=$1 
             WHERE q_id IN (
@@ -48,9 +49,11 @@ class Queue:
               )
             RETURNING q_data;
             """,
-            request_id,
-            limit,
-        ) or []
+                request_id,
+                limit,
+            )
+            or []
+        )
         if not data or not with_ack:
             await self.ack(request_id)
         return request_id, [i[0] for i in data]
@@ -89,7 +92,7 @@ class Queue:
             DELETE FROM {self._requests_table_name} 
             WHERE r_status='wait' AND created_at < current_timestamp - $1::interval
             """,
-            dt.timedelta(seconds=timeout)
+            dt.timedelta(seconds=timeout),
         )
 
     async def clean_acked_queue(self) -> None:
@@ -147,4 +150,3 @@ class QueueFabric:
         if not await self.is_exists_queue(name):
             await self._new_queue(name)
         return Queue(name, self._connection)
-
