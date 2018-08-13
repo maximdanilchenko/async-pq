@@ -22,7 +22,7 @@ class Queue:
             zip(entities),
         )
 
-    async def pop(self, limit: int = 1, with_ack: bool = True) -> Tuple[int, list]:
+    async def pop(self, *, limit: int = 1, with_ack: bool = False) -> Tuple[int, list]:
         """
         Get <limit> records from queue.
         If with_ack == True, then it needs acknowledgement
