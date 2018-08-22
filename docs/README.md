@@ -3,12 +3,12 @@
 [![Documentation Status](https://readthedocs.org/projects/async-pq/badge/?version=latest)](https://async-pq.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/maximdanilchenko/async-pq/branch/master/graph/badge.svg)](https://codecov.io/gh/maximdanilchenko/async-pq)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
-# Install
+## Install
 ```
 > pip install async-pq
 ```
 
-# Usage
+## Quick start
 
 To work with ```async-pq``` we need ```asyncpg``` library:
 ```python
@@ -26,7 +26,7 @@ from async_pq import Queue, QueueFabric
 
 queue: Queue = await QueueFabric(conn).find_queue('items')
 ```
-### Operations with queue
+## Operations with queue
 Put new items (dumped JSONs) in queue:
 ```python
 await queue.put('{"id":1,"data":[1,2,3]}', '{"id":2,"data":[3,2,6]}')

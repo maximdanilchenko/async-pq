@@ -1,3 +1,6 @@
 site_name: async-pq
 theme: readthedocs
 repo_url: https://github.com/maximdanilchenko/async-pq
+pages:
+  - Home: index.md
+  - Usage: README.md
