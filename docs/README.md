@@ -50,12 +50,14 @@ Or vice versa:
 is_unacked: bool = await queue.unack(request_id)
 ```
 
-Return to queue all unacknowledged massages older than ```timeout``` seconds:
+Return to queue all unacknowledged massages older than ```timeout``` seconds 
+(default limit=1000 entities):
 ```python
 await queue.return_unacked(timeout=300)
 ```
 
-Clean queue (delete all acknowledged massages) to not overfill database with old data:
+Clean queue (delete acknowledged massages) to not overfill database with old data 
+(default limit=1000 entities):
 ```python
 await queue.clean_acked_queue()
 ```

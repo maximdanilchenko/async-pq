@@ -4,7 +4,7 @@ import datetime as dt
 
 from asyncpg import Connection
 
-DELETE_LIMIT_SM = 10
+DELETE_LIMIT_SM = 1000  # limit of requests deleted in one query
 
 
 class Queue:
@@ -93,8 +93,8 @@ class Queue:
             f"""
             WITH deleted AS (
               DELETE FROM {self._requests_table_name} 
-              WHERE ctid IN (
-                SELECT ctid
+              WHERE r_id IN (
+                SELECT r_id
                 FROM {self._requests_table_name}
                 WHERE r_status='wait' AND created_at < current_timestamp - $1::interval
                 LIMIT $2
@@ -161,6 +161,7 @@ class QueueFabric:
               q_data JSON,
               q_request_id INT REFERENCES queue_{name}_requests(r_id) ON DELETE SET NULL
             );
+            CREATE INDEX queue_{name}_q_request_id_idx ON queue_{name} (q_request_id);
             """
         )
 
