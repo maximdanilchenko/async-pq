@@ -4,6 +4,9 @@ import datetime as dt
 
 from asyncpg import Connection
 
+DELETE_LIMIT_SM = 100
+DELETE_LIMIT_BIG = 10000
+
 
 class Queue:
     def __init__(self, name: str, connection: Connection):
@@ -85,25 +88,41 @@ class Queue:
             return True
         return False
 
-    async def return_unacked(self, timeout: int) -> None:
+    async def return_unacked(self, timeout: int, limit: int=DELETE_LIMIT_SM) -> int:
         """ Delete unacked request (queue entities will be with request_id=NULL) """
-        await self._connection.execute(
+        return await self._connection.fetchval(
             f"""
-            DELETE FROM {self._requests_table_name} 
-            WHERE r_status='wait' AND created_at < current_timestamp - $1::interval
+            WITH deleted AS (
+              DELETE FROM {self._requests_table_name} 
+              WHERE ctid IN (
+                SELECT ctid
+                FROM {self._requests_table_name}
+                WHERE r_status='wait' AND created_at < current_timestamp - $1::interval
+                LIMIT $2
+              )
+              RETURNING * 
+            )
+            SELECT count(*) FROM deleted
             """,
             dt.timedelta(seconds=timeout),
+            limit,
         )
 
-    async def clean_acked_queue(self) -> None:
+    async def clean_acked_queue(self, limit: int=DELETE_LIMIT_BIG) -> int:
         """ Delete acked queue entities (request will not be deleted) """
-        await self._connection.execute(
+        return await self._connection.fetchval(
             f"""
-            DELETE FROM {self._queue_table_name} 
-            WHERE q_request_id in (
-              SELECT r_id FROM {self._requests_table_name} where r_status='done'
-            ) 
-            """
+            WITH deleted AS (
+                DELETE FROM {self._queue_table_name} 
+                WHERE q_request_id in (
+                  SELECT r_id FROM {self._requests_table_name} where r_status='done'
+                  LIMIT $1
+                ) 
+                RETURNING * 
+            )
+            SELECT count(*) FROM deleted
+            """,
+            limit
         )
 
 
