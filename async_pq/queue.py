@@ -4,7 +4,7 @@ import datetime as dt
 
 from asyncpg import Connection
 
-DELETE_LIMIT_SM = 1000  # limit of requests deleted in one query
+DELETE_LIMIT = 1000  # limit of requests deleted in one query
 
 
 class Queue:
@@ -87,7 +87,7 @@ class Queue:
             return True
         return False
 
-    async def return_unacked(self, timeout: int, limit: int=DELETE_LIMIT_SM) -> int:
+    async def return_unacked(self, timeout: int, limit: int=DELETE_LIMIT) -> int:
         """ Delete unacked request (queue entities will be with request_id=NULL) """
         return await self._connection.fetchval(
             f"""
@@ -107,7 +107,7 @@ class Queue:
             limit,
         )
 
-    async def clean_acked_queue(self, limit: int=DELETE_LIMIT_SM) -> int:
+    async def clean_acked_queue(self, limit: int=DELETE_LIMIT) -> int:
         """ Delete acked queue entities (request will not be deleted) """
         return await self._connection.fetchval(
             f"""
