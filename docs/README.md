@@ -8,8 +8,9 @@ Python async api for creating and managing queues in postgres
 
 Postgres is not best solution for storing and managing queues, 
 but sometimes we have no choice.
-Can work with millions of entities and thousands of 
-requests in one queue. Production ready.
+
+```async-pq``` can work with millions of entities and thousands of 
+requests in one queue. Is used in production. So its well tested and stable.
 
 ## Install
 ```
