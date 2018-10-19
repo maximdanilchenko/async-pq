@@ -10,7 +10,7 @@ def readme(fname):
 
 setup(
     name='async-pq',
-    version='0.3.0',
+    version='0.3.1',
     description='Python async api for creating and managing queues in postgres',
     long_description=readme('./docs/README.md'),
     long_description_content_type="text/markdown",
