@@ -11,6 +11,9 @@ POSTGRES_PASSWORD = 'pass'
 POSTGRES_USER = 'user'
 POSTGRES_DB = 'test_db'
 
+DEFAULT_MESSAGES = ['"first"', '"second"', '"third"', '"forth"']
+CLEAN_ACKED_QUEUE_LIMIT = 2
+
 pytestmark = pytest.mark.asyncio
 
 
@@ -60,12 +63,12 @@ class TestPq:
 
     @pytest.fixture
     async def put_and_pop(self, new_queue: Queue):
-        await new_queue.put('"first"', '"second"', '"third"', '"forth"')
+        await new_queue.put(*DEFAULT_MESSAGES)
         return await new_queue.pop(limit=2, with_ack=True)
 
     @pytest.fixture
     async def put_and_pop_no_ack(self, new_queue: Queue):
-        await new_queue.put('"first"', '"second"', '"third"', '"forth"')
+        await new_queue.put(*DEFAULT_MESSAGES)
         return await new_queue.pop(limit=2, with_ack=False)
 
     @pytest.fixture
@@ -90,13 +93,13 @@ class TestPq:
 
     @pytest.fixture
     async def put_and_return_unacked(self, new_queue):
-        await new_queue.put('"first"', '"second"', '"third"', '"forth"')
+        await new_queue.put(*DEFAULT_MESSAGES)
         await new_queue.pop(limit=3, with_ack=True)
         return await new_queue.return_unacked(0)
 
     @pytest.fixture
     async def put_and_return_unacked_with_limit(self, new_queue):
-        await new_queue.put('"first"', '"second"', '"third"', '"forth"')
+        await new_queue.put(*DEFAULT_MESSAGES)
         await new_queue.pop(limit=1, with_ack=True)
         await new_queue.pop(limit=1, with_ack=True)
         await new_queue.pop(limit=1, with_ack=True)
@@ -104,15 +107,15 @@ class TestPq:
 
     @pytest.fixture
     async def clean_acked(self, new_queue):
-        await new_queue.put('"first"', '"second"', '"third"', '"forth"')
+        await new_queue.put(*DEFAULT_MESSAGES)
         await new_queue.pop(limit=10, with_ack=False)
         return await new_queue.clean_acked_queue()
 
     @pytest.fixture
     async def clean_acked_with_limit(self, new_queue):
-        await new_queue.put('"first"', '"second"', '"third"', '"forth"')
+        await new_queue.put(*DEFAULT_MESSAGES)
         await new_queue.pop(limit=10, with_ack=False)
-        return await new_queue.clean_acked_queue(limit=2)
+        return await new_queue.clean_acked_queue(limit=CLEAN_ACKED_QUEUE_LIMIT)
 
     async def test_fabric(self, pg_connection):
         queue = await QueueFabric(pg_connection).find_queue('items')
@@ -120,7 +123,7 @@ class TestPq:
 
     async def test_put_pop(self, put_and_pop):
         request_id, data = put_and_pop
-        assert data == ['"first"', '"second"']
+        assert data == [DEFAULT_MESSAGES[0], DEFAULT_MESSAGES[1]]
 
     async def test_ack_for_no_acked(self, new_queue, pop_no_ack_with_ack, pg_connection):
         assert pop_no_ack_with_ack is False
@@ -133,10 +136,10 @@ class TestPq:
             """
         )
         assert [list(r) for r in all_queue] == [
-            [1, '"first"', 1],
-            [2, '"second"', 1],
-            [3, '"third"', None],
-            [4, '"forth"', None],
+            [1, DEFAULT_MESSAGES[0], 1],
+            [2, DEFAULT_MESSAGES[1], 1],
+            [3, DEFAULT_MESSAGES[2], None],
+            [4, DEFAULT_MESSAGES[3], None],
         ]
         all_requests = await pg_connection.fetch(
             f"""
@@ -159,10 +162,10 @@ class TestPq:
             """
         )
         assert [list(r) for r in all_queue] == [
-            [1, '"first"', None],
-            [2, '"second"', None],
-            [3, '"third"', None],
-            [4, '"forth"', None],
+            [1, DEFAULT_MESSAGES[0], None],
+            [2, DEFAULT_MESSAGES[1], None],
+            [3, DEFAULT_MESSAGES[2], None],
+            [4, DEFAULT_MESSAGES[3], None],
         ]
         all_requests = await pg_connection.fetch(
             f"""
@@ -179,10 +182,10 @@ class TestPq:
             """
         )
         assert [list(r) for r in all_queue] == [
-            [1, '"first"', None],
-            [2, '"second"', None],
-            [3, '"third"', 3],
-            [4, '"forth"', None],
+            [1, DEFAULT_MESSAGES[0], None],
+            [2, DEFAULT_MESSAGES[1], None],
+            [3, DEFAULT_MESSAGES[2], 3],
+            [4, DEFAULT_MESSAGES[3], None],
         ]
         all_requests = await pg_connection.fetch(
             f"""
@@ -192,7 +195,7 @@ class TestPq:
         assert [list(r)[:2] for r in all_requests] == [[3, 'wait']]
 
     async def test_clean_acked(self, new_queue, clean_acked, pg_connection):
-        assert clean_acked == 4
+        assert clean_acked == len(DEFAULT_MESSAGES)
         all_queue = await pg_connection.fetch(
             f"""
             SELECT * from {new_queue._queue_table_name} ORDER BY q_id
@@ -207,13 +210,13 @@ class TestPq:
         assert [list(r)[:2] for r in all_requests] == [[1, 'done']]
 
     async def test_clean_acked_with_limit(self, new_queue, clean_acked_with_limit, pg_connection):
-        assert clean_acked_with_limit == 4
+        assert clean_acked_with_limit == len(DEFAULT_MESSAGES) - CLEAN_ACKED_QUEUE_LIMIT
         all_queue = await pg_connection.fetch(
             f"""
             SELECT * from {new_queue._queue_table_name} ORDER BY q_id
             """
         )
-        assert all_queue == []
+        assert len(all_queue) == len(DEFAULT_MESSAGES) - CLEAN_ACKED_QUEUE_LIMIT
         all_requests = await pg_connection.fetch(
             f"""
             SELECT * from {new_queue._requests_table_name}
