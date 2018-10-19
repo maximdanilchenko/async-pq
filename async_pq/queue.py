@@ -63,7 +63,7 @@ class Queue:
     async def ack(self, request_id: int, delete_request: bool=False) -> bool:
         """ Acknowledge request """
         if delete_request:
-            with await self._connection.transaction():
+            async with self._connection.transaction():
                 await self._connection.fetchval(
                     f"""
                     DELETE FROM {self._queue_table_name} 
