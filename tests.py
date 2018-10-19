@@ -67,6 +67,11 @@ class TestPq:
         return await new_queue.pop(limit=2, with_ack=True)
 
     @pytest.fixture
+    async def put_and_pop_all(self, new_queue: Queue):
+        await new_queue.put(*DEFAULT_MESSAGES)
+        return await new_queue.pop(limit=len(DEFAULT_MESSAGES), with_ack=True)
+
+    @pytest.fixture
     async def put_and_pop_no_ack(self, new_queue: Queue):
         await new_queue.put(*DEFAULT_MESSAGES)
         return await new_queue.pop(limit=2, with_ack=False)
@@ -75,6 +80,11 @@ class TestPq:
     async def pop_with_ack(self, new_queue, put_and_pop):
         request_id, _ = put_and_pop
         return await new_queue.ack(request_id)
+
+    @pytest.fixture
+    async def pop_with_ack_delete_request(self, new_queue, put_and_pop_all):
+        request_id, _ = put_and_pop_all
+        return await new_queue.ack(request_id, True)
 
     @pytest.fixture
     async def pop_no_ack_with_ack(self, new_queue, put_and_pop_no_ack):
@@ -147,6 +157,21 @@ class TestPq:
             """
         )
         assert [list(r)[:2] for r in all_requests] == [[1, 'done']]
+
+    async def test_ack_with_delete_request(self, new_queue, pop_with_ack_delete_request, pg_connection):
+        assert pop_with_ack_delete_request is True
+        all_queue = await pg_connection.fetch(
+            f"""
+            SELECT * from {new_queue._queue_table_name} ORDER BY q_id
+            """
+        )
+        assert len(all_queue) == 0
+        all_requests = await pg_connection.fetch(
+            f"""
+            SELECT * from {new_queue._requests_table_name} ORDER BY r_id
+            """
+        )
+        assert len(all_requests) == 0
 
     async def test_double_ack(self, pop_with_double_ack):
         assert pop_with_double_ack is False
