@@ -24,7 +24,7 @@ class Queue:
             zip(entities),
         )
 
-    async def pop(self, *, limit: int = 1, with_ack: bool = False) -> Tuple[int, list]:
+    async def pop(self, *, limit: int = 1, with_ack: bool = False, delete_request: bool=False) -> Tuple[int, list]:
         """
         Get <limit> records from queue.
         If with_ack == True, then it needs acknowledgement
@@ -57,21 +57,39 @@ class Queue:
             or []
         )
         if not data or not with_ack:
-            await self.ack(request_id)
+            await self.ack(request_id, delete_request)
         return request_id, [i[0] for i in data]
 
-    async def ack(self, request_id: int) -> bool:
+    async def ack(self, request_id: int, delete_request: bool=False) -> bool:
         """ Acknowledge request """
-        if await self._connection.fetchval(
-            f"""
-            UPDATE {self._requests_table_name} 
-            SET r_status='done' 
-            WHERE r_id=$1 AND r_status='wait' 
-            RETURNING r_id
-            """,
-            request_id,
-        ):
-            return True
+        if delete_request:
+            with await self._connection.transaction():
+                await self._connection.fetchval(
+                    f"""
+                    DELETE FROM {self._queue_table_name} 
+                    WHERE q_request_id=$1
+                    """,
+                    request_id,
+                )
+                await self._connection.fetchval(
+                    f"""
+                    DELETE FROM {self._requests_table_name} 
+                    WHERE r_id=$1
+                    """,
+                    request_id,
+                )
+                return True
+        else:
+            if await self._connection.fetchval(
+                f"""
+                UPDATE {self._requests_table_name} 
+                SET r_status='done' 
+                WHERE r_id=$1 AND r_status='wait' 
+                RETURNING r_id
+                """,
+                request_id,
+            ):
+                return True
         return False
 
     async def unack(self, request_id: int) -> bool:
