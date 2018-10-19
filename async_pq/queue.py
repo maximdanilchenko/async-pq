@@ -112,14 +112,19 @@ class Queue:
         return await self._connection.fetchval(
             f"""
             WITH deleted AS (
-                DELETE FROM {self._queue_table_name} 
-                WHERE q_request_id in (
-                  SELECT r_id FROM {self._requests_table_name} where r_status='done'
-                  LIMIT $1
-                ) 
-                RETURNING * 
+                DELETE FROM {self._queue_table_name}
+                WHERE q_id in (
+                              SELECT q_id
+                              FROM {self._queue_table_name}
+                              WHERE q_request_id IN (
+                                                    SELECT r_id
+                                                    FROM {self._requests_table_name}
+                                                    WHERE r_status='done'
+                                                    )
+                              LIMIT $1)
+                RETURNING *
             )
-            SELECT count(*) FROM deleted
+            SELECT count(*) FROM deleted;
             """,
             limit
         )
